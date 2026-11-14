@@ -1,0 +1,134 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidStudent(data) {
+      return data.keys().hasAll([
+          'nickname',
+          'classCode',
+          'totalScore',
+          'bestSpeedScore',
+          'bestLineWaveCleared',
+          'totalStars',
+          'unlockedCount',
+          'gamesPlayed',
+          'lastMode',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'nickname',
+          'classCode',
+          'totalScore',
+          'bestSpeedScore',
+          'bestLineWaveCleared',
+          'totalStars',
+          'unlockedCount',
+          'gamesPlayed',
+          'lastMode',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.nickname is string && data.nickname.size() >= 1 && data.nickname.size() <= 20
+        && data.classCode is string && data.classCode == '2026' && data.classCode.size() <= 10
+        && data.totalScore is int && data.totalScore >= 0 && data.totalScore <= 10000000
+        && data.bestSpeedScore is int && data.bestSpeedScore >= 0 && data.bestSpeedScore <= 1000000
+        && data.bestLineWaveCleared is int && data.bestLineWaveCleared >= 0 && data.bestLineWaveCleared <= 10
+        && data.totalStars is int && data.totalStars >= 0 && data.totalStars <= 15
+        && data.unlockedCount is int && data.unlockedCount >= 0 && data.unlockedCount <= 30
+        && data.gamesPlayed is int && data.gamesPlayed >= 0 && data.gamesPlayed <= 100000
+        && data.lastMode is string && data.lastMode.size() >= 1 && data.lastMode.size() <= 30
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidScoreLog(data) {
+      return data.keys().hasAll([
+          'studentId',
+          'nickname',
+          'classCode',
+          'mode',
+          'score',
+          'stageId',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'studentId',
+          'nickname',
+          'classCode',
+          'mode',
+          'score',
+          'stageId',
+          'createdAt'
+        ])
+        && isValidId(data.studentId)
+        && data.nickname is string && data.nickname.size() >= 1 && data.nickname.size() <= 20
+        && data.classCode is string && data.classCode == '2026' && data.classCode.size() <= 10
+        && data.mode is string && data.mode in ['memory', 'line', 'speed'] && data.mode.size() <= 10
+        && data.score is int && data.score >= 0 && data.score <= 100000
+        && data.stageId is int && data.stageId >= 0 && data.stageId <= 5
+        && data.createdAt is timestamp;
+    }
+
+    // Connection health check
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // Student profiles & real-time leaderboard
+    match /students/{studentId} {
+      allow get: if isValidId(studentId);
+      allow list: if resource.data.classCode == '2026';
+      allow create: if isValidId(studentId)
+        && isValidStudent(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(studentId)
+        && isValidStudent(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().nickname == existing().nickname
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'totalScore',
+          'bestSpeedScore',
+          'bestLineWaveCleared',
+          'totalStars',
+          'unlockedCount',
+          'gamesPlayed',
+          'lastMode',
+          'updatedAt'
+        ])
+        && incoming().totalScore >= existing().totalScore
+        && incoming().gamesPlayed >= existing().gamesPlayed;
+      allow delete: if false;
+    }
+
+    // Per-round score logs
+    match /scoreLogs/{logId} {
+      allow get: if isValidId(logId);
+      allow list: if resource.data.classCode == '2026';
+      allow create: if isValidId(logId)
+        && isValidScoreLog(incoming())
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/students/$(incoming().studentId));
+      allow update, delete: if false;
+    }
+  }
+}

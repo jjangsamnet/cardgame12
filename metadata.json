@@ -1,0 +1,8 @@
+{
+  "name": "똑똑 낱말 짝꿍 — 초등 1학년 그림·글자 카드 게임",
+  "description": "그림 카드와 글자 카드가 서로 맞으면 통과하는 초등학교 1학년 맞춤형 한글 낱말 카드 게임입니다.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

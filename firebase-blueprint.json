@@ -1,0 +1,138 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "초등학교 1학년 학생의 게임 프로필 및 누적 점수 정보",
+      "type": "object",
+      "properties": {
+        "nickname": {
+          "type": "string",
+          "description": "학생 별명 (1~20자)",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "classCode": {
+          "type": "string",
+          "description": "학급 접속 비밀번호 (2026)",
+          "minLength": 4,
+          "maxLength": 10
+        },
+        "totalScore": {
+          "type": "integer",
+          "description": "누적 총점"
+        },
+        "bestSpeedScore": {
+          "type": "integer",
+          "description": "스피드 퀴즈 최고 점수"
+        },
+        "bestLineWaveCleared": {
+          "type": "integer",
+          "description": "선 잇기 최고 통과 단계"
+        },
+        "totalStars": {
+          "type": "integer",
+          "description": "모은 별 개수"
+        },
+        "unlockedCount": {
+          "type": "integer",
+          "description": "모은 스티커 수"
+        },
+        "gamesPlayed": {
+          "type": "integer",
+          "description": "완료한 게임 횟수"
+        },
+        "lastMode": {
+          "type": "string",
+          "description": "마지막으로 플레이한 게임 모드",
+          "maxLength": 30
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "처음 로그인한 시각"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "마지막 점수 기록 시각"
+        }
+      },
+      "required": [
+        "nickname",
+        "classCode",
+        "totalScore",
+        "bestSpeedScore",
+        "bestLineWaveCleared",
+        "totalStars",
+        "unlockedCount",
+        "gamesPlayed",
+        "lastMode",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ScoreLog": {
+      "title": "ScoreLog",
+      "description": "학생이 게임 한 판을 마칠 때마다 기록되는 실시간 점수 로그",
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "description": "학생 문서 ID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "nickname": {
+          "type": "string",
+          "description": "학생 별명",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "classCode": {
+          "type": "string",
+          "description": "학급 접속 비밀번호 (2026)",
+          "minLength": 4,
+          "maxLength": 10
+        },
+        "mode": {
+          "type": "string",
+          "description": "게임 모드 (memory, line, speed)",
+          "enum": ["memory", "line", "speed"]
+        },
+        "score": {
+          "type": "integer",
+          "description": "해당 판에서 획득한 점수"
+        },
+        "stageId": {
+          "type": "integer",
+          "description": "스테이지 번호 (0~5)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "점수 기록 시각"
+        }
+      },
+      "required": [
+        "studentId",
+        "nickname",
+        "classCode",
+        "mode",
+        "score",
+        "stageId",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": { "$ref": "#/entities/Student" },
+      "description": "학생별 누적 점수 및 실시간 리더보드 문서"
+    },
+    "/scoreLogs/{logId}": {
+      "schema": { "$ref": "#/entities/ScoreLog" },
+      "description": "게임 완료 시 기록되는 실시간 점수 내역"
+    }
+  }
+}
